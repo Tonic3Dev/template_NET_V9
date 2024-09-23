@@ -1,6 +1,0 @@
-@template_net_9_HostAddress = http://localhost:5286
-
-GET {{template_net_9_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

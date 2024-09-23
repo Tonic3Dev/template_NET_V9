@@ -25,8 +25,8 @@ namespace template_net_9.Controllers
             /// <param name="applicationUserCreationDTO"></param>
             /// <returns></returns>
             [HttpPost("Create")]
-            //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{Roles.ADMIN}")]
-            public async Task<ActionResult<AuthResponseDTO>> CreateUser([FromBody] ApplicationUserCreationDTO applicationUserCreationDTO)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{Roles.ADMIN}")]
+        public async Task<ActionResult<AuthResponseDTO>> CreateUser([FromBody] ApplicationUserCreationDTO applicationUserCreationDTO)
             {
                 return await _userServices.CreateUser(applicationUserCreationDTO);
             }

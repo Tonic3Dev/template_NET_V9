@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using template_net_9.DTOs;
 using template_net_9.Entities;
 using template_net_9.Extensions;
@@ -14,14 +13,12 @@ namespace template_net_9.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
-        private readonly IConfiguration _configuration;
 
         public ProductServices(ApplicationDbContext context,
-            IMapper mapper, IConfiguration configuration)
+            IMapper mapper)
         {
             this._context = context;
             this._mapper = mapper;
-            this._configuration = configuration;
         }
 
         public async Task<ListResponse<ProductDTO>> GetProducts(
@@ -35,7 +32,7 @@ namespace template_net_9.Services
         }
 
 
-        public async Task<ProductDTO> GetProductById(string id)
+        public async Task<ProductDTO?> GetProductById(string id)
         {
             var product = await _context.Products
                 .FirstOrDefaultAsync(p => p.Id.ToString() == id);
@@ -60,7 +57,7 @@ namespace template_net_9.Services
             return productDTO;
         }
 
-        public async Task<ProductDTO> PatchProduct(string id,
+        public async Task<ProductDTO?> PatchProduct(string id,
             JsonPatchDocument<ProductPatchDTO> patchDocument,
             ModelStateDictionary modelState)
         {
@@ -81,7 +78,7 @@ namespace template_net_9.Services
 
             if (!modelState.IsValid)
             {
-                throw new BadHttpRequestException("The modelstate is not valid");
+                throw new BadHttpRequestException("The model state is not valid");
             }
 
             _mapper.Map(productPatchDTO, product);
@@ -91,7 +88,7 @@ namespace template_net_9.Services
             return productDTO;
         }
 
-        public async Task<ProductDTO> DeleteProduct(string id)
+        public async Task<ProductDTO?> DeleteProduct(string id)
         {
             var product = await _context.Products.FirstOrDefaultAsync(x => x.Id.ToString() == id);
 

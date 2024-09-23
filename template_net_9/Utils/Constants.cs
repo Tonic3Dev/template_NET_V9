@@ -14,10 +14,5 @@
             public const string ADMIN = "Admin";
             public const string USER = "User";
         }
-
-        public static class AWS
-        {
-            public const string ROOTFOLDER = "admin";
-        }
     }
 }

@@ -112,33 +112,31 @@ namespace template_net_9.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("ECOMMERCE_JWT_KEY")));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var expiracion = DateTime.UtcNow.AddDays(1);
+            var expirationTime = DateTime.UtcNow.AddDays(1);
 
-            JwtSecurityToken token = new JwtSecurityToken(
+            JwtSecurityToken token = new(
                 issuer: null,
                 audience: null,
                 claims: claims,
-                expires: expiracion,
+                expires: expirationTime,
                 signingCredentials: creds);
 
-            var respuesta = new AuthResponseDTO
+            var response = new AuthResponseDTO
             {
                 AuthToken =
                     {
                         Token = new JwtSecurityTokenHandler().WriteToken(token),
-                        ExpiresIn = (int)(expiracion - DateTime.UtcNow).TotalMinutes
+                        ExpiresIn = (int)(expirationTime - DateTime.UtcNow).TotalMinutes
                     },
                 TokenType = "Bearer",
                 AuthState = _mapper.Map<ApplicationUserDTO>(applicationUser)
             };
 
-            return respuesta;
+            return response;
         }
-
-        //método para retornar una respuesta de error
-        private AuthResponseDTO BuildErrorResponse(string errorCode, string errorDescription)
+        
+        private static AuthResponseDTO BuildErrorResponse(string errorCode, string errorDescription)
         {
-            //Si hay un error lo obtenemos y devolvemos su código de error y su descripción
             return new AuthResponseDTO
             {
                 Error = new ApiError
@@ -174,7 +172,7 @@ namespace template_net_9.Services
 
             if (!modelState.IsValid)
             {
-                throw new BadHttpRequestException("The modelstate is not valid");
+                throw new BadHttpRequestException("The model state is not valid");
             }
 
             _mapper.Map(applicationUserPatchDTO, user);

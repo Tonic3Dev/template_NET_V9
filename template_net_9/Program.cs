@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
@@ -33,12 +34,12 @@ builder.Services.AddScoped<ProductServices>();
 
 
 string? connectionString = Environment.GetEnvironmentVariable("TEMPLATE_NET_9_CONNECTION");
-//if (connectionString == null) throw new Exception("TEMPLATE_NET_9_CONNECTION environment variable not set");
-//builder.Services.AddEntityFrameworkNpgsql()
-//    .AddDbContext<ApplicationDbContext>(options =>
-//    {
-//        options.UseNpgsql(connectionString.BuildPostgresConnectionString());
-//    });
+if (connectionString == null) throw new Exception("TEMPLATE_NET_9_CONNECTION environment variable not set");
+builder.Services.AddEntityFrameworkNpgsql()
+    .AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseNpgsql(connectionString.BuildPostgresConnectionString());
+    });
 
 
 string? jwtKey = Environment.GetEnvironmentVariable("TEMPLATE_NET_9_JWT_KEY");
@@ -86,7 +87,7 @@ builder.Services.AddSwaggerGen(c =>
                                 Id = "Bearer"
                             }
                         },
-                        new string[]{}
+                        Array.Empty<string>()
                     }
                 });
 
@@ -117,6 +118,8 @@ app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "template_net_9");
 });
+
+app.UseRewriter(new RewriteOptions().AddRedirect("^$", "swagger/index.html"));
 
 app.MapControllers();
 
