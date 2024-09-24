@@ -1,20 +1,21 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System.Reflection;
 using template_net_9.DTOs;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Linq.Dynamic.Core;
+using System.Reflection;
 
 namespace template_net_9.Extensions
 {
     public static class IQueryableExtensions
     {
-
-        public static async Task<ListResponse<TDTO>> FilterSortPaginate<TEntity, TDTO>(
+        public static async Task<List<TDTO>> FilterSortPaginate<TEntity, TDTO>(
             this IQueryable<TEntity> queryable,
             BaseFilter baseFilter,
-            IMapper mapper) where TEntity : class, new()
+            IMapper mapper,
+            IActionContextAccessor actionContextAccessor) where TEntity : class, new()
         {
             queryable = queryable.Filter<TEntity>(baseFilter.Filters);
 
@@ -22,12 +23,13 @@ namespace template_net_9.Extensions
 
             queryable = queryable.Sort(baseFilter.Sort);
 
-            queryable = queryable.Paginate(baseFilter.Range);
+            queryable = queryable.Paginate(baseFilter.Range, actionContextAccessor, count);
 
-            return new ListResponse<TDTO>(mapper.Map<List<TDTO>>(queryable), count);
+            return mapper.Map<List<TDTO>>(queryable);
         }
 
-        public static IQueryable<TEntity> Filter<TEntity>(this IQueryable<TEntity> queryable, string filtersString) where TEntity : class, new()
+        public static IQueryable<TEntity> Filter<TEntity>(this IQueryable<TEntity> queryable, string filtersString)
+            where TEntity : class, new()
         {
             if (String.IsNullOrEmpty(filtersString)) return queryable;
 
@@ -80,6 +82,11 @@ namespace template_net_9.Extensions
                             var key = filter.Field.Replace("_cnt", "");
                             query = $"e => e.{key}.ToString().Contains(@0.ToString())";
                         }
+                        else if (filter.Field.Contains("_date")) // Element property value is a date
+                        {
+                            var key = filter.Field.Replace("_date", "");
+                            query = $"e => e.{key}.Date == @0";
+                        }
                     }
                     try
                     {
@@ -102,8 +109,10 @@ namespace template_net_9.Extensions
             return queryable.OrderBy($"{sort.Field} {order}");
         }
 
-        public static IQueryable<TEntity> Paginate<TEntity>(this IQueryable<TEntity> queryable, DTOs.Range range)
+        public static IQueryable<TEntity> Paginate<TEntity>(this IQueryable<TEntity> queryable, template_net_9.DTOs.Range range, IActionContextAccessor actionContextAccessor, int totalRecordsAmount)
         {
+            var entityTypeName = typeof(TEntity).Name.ToLower();
+            actionContextAccessor.ActionContext.HttpContext.InsertPaginationParams(entityTypeName, range.Start, range.End, totalRecordsAmount);
             return queryable.Skip(range.Start).Take(range.End - range.Start + 1);
         }
 
@@ -111,6 +120,5 @@ namespace template_net_9.Extensions
         {
             return value.ToString().Replace("[", "").Replace("]", "").Replace("{", "").Replace("}", "").Replace("\"", "").Trim();
         }
-    
     }
 }

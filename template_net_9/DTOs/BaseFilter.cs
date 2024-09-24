@@ -1,11 +1,15 @@
-﻿namespace template_net_9.DTOs
+﻿using template_net_9.Attributes;
+
+namespace template_net_9.DTOs
 {
     public class BaseFilter
     {
-
         // Using List<FilterValue> causes the query not getting recognized on the request, the filter implementation has to manually convert it
         public string Filters { get; set; }
+
+        [EndBiggerOrEqualThanStart]
         public Range Range { get; set; } = new Range() { Start = 0, End = 9 };
+
         public Sort Sort { get; set; }
     }
 
@@ -26,6 +30,4 @@
         public string Field { get; set; }
         public bool IsAscending { get; set; } = true;
     }
-
-
 }

@@ -11,6 +11,8 @@ using template_net_9.Entities;
 using template_net_9.Services;
 using template_net_9;
 using template_net_9.Utils;
+using template_net_9.Entities.Users;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,12 +31,13 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddHttpClient();
 
-builder.Services.AddScoped<UserServices>();
-builder.Services.AddScoped<ProductServices>();
+builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+
+builder.Services.AddScoped<TimetrackServices>();
 
 
-string? connectionString = Environment.GetEnvironmentVariable("TEMPLATE_NET_9_CONNECTION");
-if (connectionString == null) throw new Exception("TEMPLATE_NET_9_CONNECTION environment variable not set");
+string? connectionString = Environment.GetEnvironmentVariable("GMS_DB_CONNECTION");
+if (connectionString == null) throw new Exception("GMS_DB_CONNECTION environment variable not set");
 builder.Services.AddEntityFrameworkNpgsql()
     .AddDbContext<ApplicationDbContext>(options =>
     {
@@ -42,19 +45,19 @@ builder.Services.AddEntityFrameworkNpgsql()
     });
 
 
-string? jwtKey = Environment.GetEnvironmentVariable("TEMPLATE_NET_9_JWT_KEY");
-//if (jwtKey == null) throw new Exception("TEMPLATE_NET_9_JWT_KEY environment variable not set");
-//builder.Services.AddAuthentication()
-//    .AddJwtBearer(options =>
-//            options.TokenValidationParameters = new TokenValidationParameters
-//            {
-//                ValidateIssuer = false,
-//                ValidateAudience = false,
-//                ValidateLifetime = true,
-//                ValidateIssuerSigningKey = false,
-//                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-//                ClockSkew = TimeSpan.Zero
-//            });
+string? jwtKey = Environment.GetEnvironmentVariable("GMS_JWT_KEY");
+if (jwtKey == null) throw new Exception("GMS_JWT_KEY environment variable not set");
+builder.Services.AddAuthentication()
+    .AddJwtBearer(options =>
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = false,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                ClockSkew = TimeSpan.Zero
+            });
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
