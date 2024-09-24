@@ -29,6 +29,7 @@ namespace template_net_9.Services
         public async Task<List<TimetrackItemDTO>> GetTimetrackItems()
         {
             var timetrackItems = await _context.TimetrackItems
+                .AsNoTracking()
                 .Include(t => t.LegacyUser)
                 .ThenInclude(u => u.BusinessUnit)
                 .Include(t => t.Project)
@@ -44,10 +45,21 @@ namespace template_net_9.Services
 
             //var dtos = await timetrackItems.FilterSortPaginate<TimetrackItem, TimetrackItemDTO>(timetrackItemsFilterDTO, _mapper, _actionContextAccessor);
             var dtos = _mapper.Map<List<TimetrackItemDTO>>(timetrackItems);
-            var employees = await _context.Employees.ToListAsync();
-            var providers = await _context.Providers.ToListAsync();
-            dtos.ForEach(dto => dto.LegacyUser.InjectFileNumber(employees));
-            dtos.ForEach(dto => dto.LegacyUser.InjectFileNumberForProviders(providers));
+
+            var usersIds = timetrackItems.Select(t => t.LegacyUserId).Distinct().ToList();
+            var employees = await _context.Employees
+                .Where(e => usersIds.Contains(e.LegacyUserId))
+                .ToListAsync();
+
+            var providers = await _context.Providers
+                .Where(p => usersIds.Contains((int)p.LegacyUserId))
+                .ToListAsync();
+
+            Parallel.ForEach(dtos, dto =>
+            {
+                dto.LegacyUser.InjectFileNumber(employees);
+                dto.LegacyUser.InjectFileNumberForProviders(providers);
+            });
             return dtos;
         }
     }
